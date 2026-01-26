@@ -1,0 +1,325 @@
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
+import { Head, Link, router } from '@inertiajs/react';
+import {
+    Box,
+    Container,
+    Typography,
+    Card,
+    CardContent,
+    CardHeader,
+    TextField,
+    Button,
+    MenuItem,
+    Select,
+    FormControl,
+    InputLabel,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Chip,
+    Stack,
+    IconButton,
+} from '@mui/material';
+import { useState } from 'react';
+import { Search as SearchIcon, Add as AddIcon, Visibility, Edit, Delete } from '@mui/icons-material';
+
+interface Category {
+    id: number;
+    name: string;
+}
+
+interface Quote {
+    id: number;
+    text: string;
+    author: string | null;
+    category_id: number;
+    is_active: boolean;
+    created_at: string;
+    category?: Category;
+}
+
+interface PaginatedQuotes {
+    data: Quote[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: Array<{
+        url: string | null;
+        label: string;
+        active: boolean;
+    }>;
+}
+
+interface Props {
+    quotes: PaginatedQuotes;
+    categories: Category[];
+    filters: {
+        search?: string;
+        category_id?: number;
+        is_active?: boolean;
+    };
+}
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Admin',
+        href: '/admin/dashboard',
+    },
+    {
+        title: 'Frases',
+        href: '/admin/quotes',
+    },
+];
+
+export default function QuotesIndex({ quotes, categories, filters: initialFilters }: Props) {
+    const [filters, setFilters] = useState(initialFilters);
+    const [search, setSearch] = useState(initialFilters.search || '');
+
+    const handleSearch = () => {
+        router.get(
+            '/admin/quotes',
+            { search, category_id: filters.category_id, is_active: filters.is_active },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            }
+        );
+    };
+
+    const handleFilterChange = (key: string, value: string) => {
+        const newFilters = {
+            ...filters,
+            [key]: value === 'all' ? undefined : key === 'category_id' ? parseInt(value) : value === 'true',
+        };
+        setFilters(newFilters);
+        router.get('/admin/quotes', newFilters, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const handleDelete = (id: number) => {
+        if (confirm('¿Estás seguro de eliminar esta frase?')) {
+            router.delete(`/admin/quotes/${id}`, {
+                preserveScroll: true,
+            });
+        }
+    };
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Frases" />
+            <Container maxWidth="xl" sx={{ py: 4 }}>
+                <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box>
+                        <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
+                            Frases
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            Gestiona las frases y citas
+                        </Typography>
+                    </Box>
+                    <Button
+                        component={Link}
+                        href="/admin/quotes/create"
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        Nueva Frase
+                    </Button>
+                </Box>
+
+                {/* Filters */}
+                <Card sx={{ mb: 3 }}>
+                    <CardHeader title="Filtros" />
+                    <CardContent>
+                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                            <TextField
+                                id="search"
+                                label="Buscar"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                placeholder="Buscar por texto o autor..."
+                                sx={{ flex: 1, minWidth: 200 }}
+                                InputProps={{
+                                    endAdornment: (
+                                        <Button
+                                            onClick={handleSearch}
+                                            startIcon={<SearchIcon />}
+                                            sx={{ textTransform: 'none' }}
+                                        >
+                                            Buscar
+                                        </Button>
+                                    ),
+                                }}
+                            />
+                            <FormControl sx={{ minWidth: 150 }}>
+                                <InputLabel id="category_id-label">Categoría</InputLabel>
+                                <Select
+                                    labelId="category_id-label"
+                                    id="category_id"
+                                    value={filters.category_id || 'all'}
+                                    onChange={(e) => handleFilterChange('category_id', e.target.value)}
+                                    label="Categoría"
+                                >
+                                    <MenuItem value="all">Todas</MenuItem>
+                                    {categories.map((cat) => (
+                                        <MenuItem key={cat.id} value={cat.id}>
+                                            {cat.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <FormControl sx={{ minWidth: 150 }}>
+                                <InputLabel id="is_active-label">Estado</InputLabel>
+                                <Select
+                                    labelId="is_active-label"
+                                    id="is_active"
+                                    value={filters.is_active === undefined ? 'all' : filters.is_active.toString()}
+                                    onChange={(e) => handleFilterChange('is_active', e.target.value)}
+                                    label="Estado"
+                                >
+                                    <MenuItem value="all">Todos</MenuItem>
+                                    <MenuItem value="true">Activos</MenuItem>
+                                    <MenuItem value="false">Inactivos</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
+                    </CardContent>
+                </Card>
+
+                {/* Table */}
+                <Card>
+                    <CardHeader
+                        title={
+                            <Typography variant="h6" fontWeight={600}>
+                                Lista de Frases ({quotes.total})
+                            </Typography>
+                        }
+                    />
+                    <CardContent>
+                        {quotes.data.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                                No se encontraron frases
+                            </Typography>
+                        ) : (
+                            <TableContainer>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>ID</TableCell>
+                                            <TableCell>Texto</TableCell>
+                                            <TableCell>Autor</TableCell>
+                                            <TableCell>Categoría</TableCell>
+                                            <TableCell>Estado</TableCell>
+                                            <TableCell>Acciones</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {quotes.data.map((quote) => (
+                                            <TableRow key={quote.id} hover>
+                                                <TableCell>{quote.id}</TableCell>
+                                                <TableCell sx={{ maxWidth: 400 }}>
+                                                    <Typography variant="body2" noWrap>
+                                                        {quote.text}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {quote.author || '-'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2">
+                                                        {quote.category?.name || '-'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        label={quote.is_active ? 'Activo' : 'Inactivo'}
+                                                        color={quote.is_active ? 'success' : 'default'}
+                                                        size="small"
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Stack direction="row" spacing={1}>
+                                                        <IconButton
+                                                            component={Link}
+                                                            href={`/admin/quotes/${quote.id}`}
+                                                            size="small"
+                                                            color="primary"
+                                                        >
+                                                            <Visibility fontSize="small" />
+                                                        </IconButton>
+                                                        <IconButton
+                                                            component={Link}
+                                                            href={`/admin/quotes/${quote.id}/edit`}
+                                                            size="small"
+                                                            color="primary"
+                                                        >
+                                                            <Edit fontSize="small" />
+                                                        </IconButton>
+                                                        <IconButton
+                                                            onClick={() => handleDelete(quote.id)}
+                                                            size="small"
+                                                            color="error"
+                                                        >
+                                                            <Delete fontSize="small" />
+                                                        </IconButton>
+                                                    </Stack>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        )}
+
+                        {/* Pagination */}
+                        {quotes.last_page > 1 && (
+                            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Mostrando {quotes.data.length} de {quotes.total} frases
+                                </Typography>
+                                <Stack direction="row" spacing={1}>
+                                    {quotes.links.map((link, index) => {
+                                        if (!link.url) {
+                                            return (
+                                                <Button
+                                                    key={index}
+                                                    disabled
+                                                    variant={link.active ? 'contained' : 'outlined'}
+                                                    sx={{ minWidth: 40 }}
+                                                >
+                                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                                </Button>
+                                            );
+                                        }
+                                        return (
+                                            <Button
+                                                key={index}
+                                                component={Link}
+                                                href={link.url}
+                                                variant={link.active ? 'contained' : 'outlined'}
+                                                sx={{ minWidth: 40, textTransform: 'none' }}
+                                            >
+                                                <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                            </Button>
+                                        );
+                                    })}
+                                </Stack>
+                            </Box>
+                        )}
+                    </CardContent>
+                </Card>
+            </Container>
+        </AppLayout>
+    );
+}

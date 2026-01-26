@@ -1,41 +1,52 @@
 import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { cn, toUrl } from '@/lib/utils';
+import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
+import {
+    Box,
+    Button,
+    Divider,
+    List,
+    ListItem,
+    ListItemButton,
+    Typography,
+    useTheme,
+    useMediaQuery,
+} from '@mui/material';
 import type { PropsWithChildren } from 'react';
 
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
-        href: edit(),
+        href: edit().url,
         icon: null,
     },
     {
         title: 'Password',
-        href: editPassword(),
+        href: editPassword().url,
         icon: null,
     },
     {
         title: 'Two-Factor Auth',
-        href: show(),
+        href: show().url,
         icon: null,
     },
     {
         title: 'Appearance',
-        href: editAppearance(),
+        href: editAppearance().url,
         icon: null,
     },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentUrl } = useCurrentUrl();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
     // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {
@@ -43,47 +54,71 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     }
 
     return (
-        <div className="px-4 py-6">
+        <Box sx={{ px: 3, py: 3 }}>
             <Heading
                 title="Settings"
                 description="Manage your profile and account settings"
             />
 
-            <div className="flex flex-col lg:flex-row lg:space-x-12">
-                <aside className="w-full max-w-xl lg:w-48">
-                    <nav
-                        className="flex flex-col space-y-1 space-x-0"
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    gap: 3,
+                }}
+            >
+                <Box
+                    component="aside"
+                    sx={{
+                        width: { xs: '100%', lg: 200 },
+                        maxWidth: { xs: '100%', lg: 200 },
+                    }}
+                >
+                    <Box
+                        component="nav"
                         aria-label="Settings"
                     >
-                        {sidebarNavItems.map((item, index) => (
-                            <Button
-                                key={`${toUrl(item.href)}-${index}`}
-                                size="sm"
-                                variant="ghost"
-                                asChild
-                                className={cn('w-full justify-start', {
-                                    'bg-muted': isCurrentUrl(item.href),
-                                })}
-                            >
-                                <Link href={item.href}>
-                                    {item.icon && (
-                                        <item.icon className="h-4 w-4" />
-                                    )}
-                                    {item.title}
-                                </Link>
-                            </Button>
-                        ))}
-                    </nav>
-                </aside>
+                        <List>
+                            {sidebarNavItems.map((item, index) => (
+                                <ListItem key={`${toUrl(item.href)}-${index}`} disablePadding>
+                                    <ListItemButton
+                                        component={Link}
+                                        href={item.href}
+                                        selected={isCurrentUrl(item.href)}
+                                        sx={{
+                                            borderRadius: 1,
+                                            '&.Mui-selected': {
+                                                bgcolor: 'action.selected',
+                                            },
+                                        }}
+                                    >
+                                        {item.icon && (
+                                            <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
+                                                <item.icon size={16} />
+                                            </Box>
+                                        )}
+                                        <Typography variant="body2">{item.title}</Typography>
+                                    </ListItemButton>
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Box>
+                </Box>
 
-                <Separator className="my-6 lg:hidden" />
+                {isMobile && <Divider />}
 
-                <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">
+                <Box
+                    component="main"
+                    sx={{
+                        flex: 1,
+                        maxWidth: { md: 672 },
+                    }}
+                >
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         {children}
-                    </section>
-                </div>
-            </div>
-        </div>
+                    </Box>
+                </Box>
+            </Box>
+        </Box>
     );
 }

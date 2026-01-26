@@ -1,21 +1,22 @@
-import { SidebarInset } from '@/components/ui/sidebar';
+import { Box } from '@mui/material';
 import * as React from 'react';
 
-type Props = React.ComponentProps<'main'> & {
+type Props = React.ComponentProps<'div'> & {
     variant?: 'header' | 'sidebar';
 };
 
 export function AppContent({ variant = 'header', children, ...props }: Props) {
-    if (variant === 'sidebar') {
-        return <SidebarInset {...props}>{children}</SidebarInset>;
-    }
-
     return (
-        <main
-            className="mx-auto flex h-full w-full max-w-7xl flex-1 flex-col gap-4 rounded-xl"
+        <Box
+            component="main"
+            sx={{
+                flexGrow: 1,
+                bgcolor: 'background.default',
+                minHeight: '100vh',
+            }}
             {...props}
         >
             {children}
-        </main>
+        </Box>
     );
 }

@@ -1,15 +1,18 @@
-import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
-import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import { Form, Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
+import {
+    Box,
+    Button,
+    TextField,
+    FormControlLabel,
+    Checkbox,
+    Typography,
+    Link as MuiLink,
+    Alert,
+} from '@mui/material';
+import { Login as LoginIcon } from '@mui/icons-material';
 
 type Props = {
     status?: string;
@@ -22,99 +25,115 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: Props) {
+    const { data, setData, post, processing, errors, reset } = useForm({
+        email: '',
+        password: '',
+        remember: false,
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(store().url, {
+            onSuccess: () => {
+                reset('password');
+            },
+        });
+    };
+
     return (
         <AuthLayout
-            title="Log in to your account"
-            description="Enter your email and password below to log in"
+            title="Iniciar Sesión"
+            description="Ingresa tu email y contraseña para acceder a tu cuenta"
         >
-            <Head title="Log in" />
-
-            <Form
-                {...store.form()}
-                resetOnSuccess={['password']}
-                className="flex flex-col gap-6"
-            >
-                {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={request()}
-                                            className="ml-auto text-sm"
-                                            tabIndex={5}
-                                        >
-                                            Forgot password?
-                                        </TextLink>
-                                    )}
-                                </div>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    name="password"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="current-password"
-                                    placeholder="Password"
-                                />
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
-                                <Label htmlFor="remember">Remember me</Label>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="mt-4 w-full"
-                                tabIndex={4}
-                                disabled={processing}
-                                data-test="login-button"
-                            >
-                                {processing && <Spinner />}
-                                Log in
-                            </Button>
-                        </div>
-
-                        {canRegister && (
-                            <div className="text-center text-sm text-muted-foreground">
-                                Don't have an account?{' '}
-                                <TextLink href={register()} tabIndex={5}>
-                                    Sign up
-                                </TextLink>
-                            </div>
-                        )}
-                    </>
-                )}
-            </Form>
+            <Head title="Iniciar Sesión - Aurea" />
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <Alert severity="success" sx={{ mb: 3 }}>
                     {status}
-                </div>
+                </Alert>
             )}
+
+            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <TextField
+                    id="email"
+                    name="email"
+                    type="email"
+                    label="Email"
+                    value={data.email}
+                    onChange={(e) => setData('email', e.target.value)}
+                    required
+                    autoFocus
+                    autoComplete="email"
+                    placeholder="email@example.com"
+                    error={!!errors.email}
+                    helperText={errors.email}
+                    fullWidth
+                />
+
+                <Box>
+                    <TextField
+                        id="password"
+                        name="password"
+                        type="password"
+                        label="Contraseña"
+                        value={data.password}
+                        onChange={(e) => setData('password', e.target.value)}
+                        required
+                        autoComplete="current-password"
+                        placeholder="Contraseña"
+                        error={!!errors.password}
+                        helperText={errors.password}
+                        fullWidth
+                    />
+                    {canResetPassword && (
+                        <MuiLink
+                            href={request()}
+                            component="a"
+                            variant="body2"
+                            sx={{ mt: 1, display: 'block', textAlign: 'right' }}
+                        >
+                            ¿Olvidaste tu contraseña?
+                        </MuiLink>
+                    )}
+                </Box>
+
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={data.remember}
+                            onChange={(e) => setData('remember', e.target.checked)}
+                            name="remember"
+                        />
+                    }
+                    label="Recordarme"
+                />
+
+                <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    disabled={processing}
+                    startIcon={<LoginIcon />}
+                    sx={{ textTransform: 'none', mt: 2 }}
+                >
+                    {processing ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                </Button>
+
+                {canRegister && (
+                    <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+                        ¿No tienes una cuenta?{' '}
+                        <MuiLink
+                            href="#"
+                            component="a"
+                            sx={{ fontWeight: 600 }}
+                            onClick={(e) => e.preventDefault()}
+                        >
+                            Regístrate
+                        </MuiLink>
+                    </Typography>
+                )}
+            </Box>
         </AuthLayout>
     );
 }

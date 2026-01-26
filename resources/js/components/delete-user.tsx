@@ -1,121 +1,127 @@
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
 import {
+    Box,
+    Button,
     Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
     DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Form } from '@inertiajs/react';
-import { useRef } from 'react';
+    DialogContent,
+    DialogActions,
+    TextField,
+    Alert,
+} from '@mui/material';
+import { useForm } from '@inertiajs/react';
+import { useRef, useState } from 'react';
 
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
+    const [open, setOpen] = useState(false);
+
+    const { data, setData, delete: deleteMethod, processing, errors, reset } = useForm({
+        password: '',
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        deleteMethod(ProfileController.destroy().url, {
+            preserveScroll: true,
+            onError: () => {
+                passwordInput.current?.focus();
+            },
+            onSuccess: () => {
+                reset();
+                setOpen(false);
+            },
+        });
+    };
 
     return (
-        <div className="space-y-6">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Heading
                 variant="small"
                 title="Delete account"
                 description="Delete your account and all of its resources"
             />
-            <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-                <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                    <p className="font-medium">Warning</p>
-                    <p className="text-sm">
+            <Alert
+                severity="warning"
+                sx={{
+                    bgcolor: 'error.light',
+                    color: 'error.dark',
+                    border: 1,
+                    borderColor: 'error.main',
+                }}
+            >
+                <Box>
+                    <Box sx={{ fontWeight: 600, mb: 0.5 }}>Warning</Box>
+                    <Box sx={{ fontSize: '0.875rem' }}>
                         Please proceed with caution, this cannot be undone.
-                    </p>
-                </div>
+                    </Box>
+                </Box>
+            </Alert>
 
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button
-                            variant="destructive"
-                            data-test="delete-user-button"
-                        >
-                            Delete account
-                        </Button>
-                    </DialogTrigger>
+            <Button
+                variant="contained"
+                color="error"
+                onClick={() => setOpen(true)}
+                data-test="delete-user-button"
+                sx={{ textTransform: 'none', alignSelf: 'flex-start' }}
+            >
+                Delete account
+            </Button>
+
+            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>
+                    Are you sure you want to delete your account?
+                </DialogTitle>
+                <Box component="form" onSubmit={handleSubmit}>
                     <DialogContent>
-                        <DialogTitle>
-                            Are you sure you want to delete your account?
-                        </DialogTitle>
-                        <DialogDescription>
+                        <Box sx={{ mb: 2 }}>
                             Once your account is deleted, all of its resources
                             and data will also be permanently deleted. Please
                             enter your password to confirm you would like to
                             permanently delete your account.
-                        </DialogDescription>
-
-                        <Form
-                            {...ProfileController.destroy.form()}
-                            options={{
-                                preserveScroll: true,
-                            }}
-                            onError={() => passwordInput.current?.focus()}
-                            resetOnSuccess
-                            className="space-y-6"
-                        >
-                            {({ resetAndClearErrors, processing, errors }) => (
-                                <>
-                                    <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="password"
-                                            className="sr-only"
-                                        >
-                                            Password
-                                        </Label>
-
-                                        <Input
-                                            id="password"
-                                            type="password"
-                                            name="password"
-                                            ref={passwordInput}
-                                            placeholder="Password"
-                                            autoComplete="current-password"
-                                        />
-
-                                        <InputError message={errors.password} />
-                                    </div>
-
-                                    <DialogFooter className="gap-2">
-                                        <DialogClose asChild>
-                                            <Button
-                                                variant="secondary"
-                                                onClick={() =>
-                                                    resetAndClearErrors()
-                                                }
-                                            >
-                                                Cancel
-                                            </Button>
-                                        </DialogClose>
-
-                                        <Button
-                                            variant="destructive"
-                                            disabled={processing}
-                                            asChild
-                                        >
-                                            <button
-                                                type="submit"
-                                                data-test="confirm-delete-user-button"
-                                            >
-                                                Delete account
-                                            </button>
-                                        </Button>
-                                    </DialogFooter>
-                                </>
-                            )}
-                        </Form>
+                        </Box>
+                        <TextField
+                            id="password"
+                            name="password"
+                            type="password"
+                            label="Password"
+                            inputRef={passwordInput}
+                            value={data.password}
+                            onChange={(e) => setData('password', e.target.value)}
+                            required
+                            autoComplete="current-password"
+                            placeholder="Password"
+                            error={!!errors.password}
+                            helperText={errors.password}
+                            fullWidth
+                            autoFocus
+                        />
                     </DialogContent>
-                </Dialog>
-            </div>
-        </div>
+                    <DialogActions>
+                        <Button
+                            onClick={() => {
+                                setOpen(false);
+                                reset();
+                            }}
+                            sx={{ textTransform: 'none' }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="error"
+                            disabled={processing}
+                            data-test="confirm-delete-user-button"
+                            sx={{ textTransform: 'none' }}
+                        >
+                            Delete account
+                        </Button>
+                    </DialogActions>
+                </Box>
+            </Dialog>
+        </Box>
     );
 }

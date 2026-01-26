@@ -144,7 +144,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Features::registration(), // Desactivado: registro solo disponible en la app móvil
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

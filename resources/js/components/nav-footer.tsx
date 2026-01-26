@@ -1,49 +1,54 @@
-import {
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-} from '@/components/ui/sidebar';
-import { toUrl } from '@/lib/utils';
 import type { NavItem } from '@/types';
-import type { ComponentPropsWithoutRef } from 'react';
+import { Link } from '@inertiajs/react';
+import {
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Box,
+} from '@mui/material';
 
 export function NavFooter({
-    items,
-    className,
-    ...props
-}: ComponentPropsWithoutRef<typeof SidebarGroup> & {
+    items = [],
+    onItemClick,
+    collapsed = false,
+}: {
     items: NavItem[];
+    onItemClick?: () => void;
+    collapsed?: boolean;
 }) {
     return (
-        <SidebarGroup
-            {...props}
-            className={`group-data-[collapsible=icon]:p-0 ${className || ''}`}
-        >
-            <SidebarGroupContent>
-                <SidebarMenu>
-                    {items.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton
-                                asChild
-                                className="text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100"
-                            >
-                                <a
-                                    href={toUrl(item.href)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+        <Box sx={{ p: collapsed ? 1 : 2 }}>
+            <List>
+                {items.map((item) => (
+                    <ListItem key={item.title} disablePadding>
+                        <ListItemButton
+                            component={Link}
+                            href={item.href}
+                            onClick={onItemClick}
+                            sx={{
+                                borderRadius: 1,
+                                mx: collapsed ? 0.5 : 1,
+                                justifyContent: collapsed ? 'center' : 'flex-start',
+                                minHeight: 48,
+                            }}
+                        >
+                            {item.icon && (
+                                <ListItemIcon
+                                    sx={{
+                                        minWidth: collapsed ? 0 : 40,
+                                        justifyContent: 'center',
+                                    }}
                                 >
-                                    {item.icon && (
-                                        <item.icon className="h-5 w-5" />
-                                    )}
-                                    <span>{item.title}</span>
-                                </a>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    ))}
-                </SidebarMenu>
-            </SidebarGroupContent>
-        </SidebarGroup>
+                                    <item.icon size={20} />
+                                </ListItemIcon>
+                            )}
+                            {!collapsed && <ListItemText primary={item.title} />}
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+            </List>
+        </Box>
     );
 }

@@ -2,10 +2,13 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ThemeProvider } from '@mui/material/styles';
+import { CssBaseline } from '@mui/material';
 import '../css/app.css';
 import { initializeTheme } from './hooks/use-appearance';
+import { aureaTheme } from './theme/aurea-theme';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'Aurea';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -19,12 +22,15 @@ createInertiaApp({
 
         root.render(
             <StrictMode>
-                <App {...props} />
+                <ThemeProvider theme={aureaTheme}>
+                    <CssBaseline />
+                    <App {...props} />
+                </ThemeProvider>
             </StrictMode>,
         );
     },
     progress: {
-        color: '#4B5563',
+        color: '#D4AF37', // Color primario de Aurea
     },
 });
 

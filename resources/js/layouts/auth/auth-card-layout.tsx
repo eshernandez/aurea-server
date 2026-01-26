@@ -1,13 +1,13 @@
-import AppLogoIcon from '@/components/app-logo-icon';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import { home } from '@/routes';
 import { Link } from '@inertiajs/react';
+import {
+    Box,
+    Container,
+    Card,
+    CardContent,
+    CardHeader,
+    Typography,
+} from '@mui/material';
 import type { PropsWithChildren } from 'react';
 
 export default function AuthCardLayout({
@@ -20,29 +20,62 @@ export default function AuthCardLayout({
     description?: string;
 }>) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
-            <div className="flex w-full max-w-md flex-col gap-6">
-                <Link
-                    href={home()}
-                    className="flex items-center gap-2 self-center font-medium"
-                >
-                    <div className="flex h-9 w-9 items-center justify-center">
-                        <AppLogoIcon className="size-9 fill-current text-black dark:text-white" />
-                    </div>
-                </Link>
+        <Box
+            sx={{
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 3,
+                bgcolor: 'background.default',
+                p: { xs: 3, md: 5 },
+            }}
+        >
+            <Container maxWidth="sm">
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <Link
+                        href={home()}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textDecoration: 'none',
+                        }}
+                    >
+                        <img
+                            src="/img/logo-7.png"
+                            alt="Aurea"
+                            style={{ height: 64, width: 'auto' }}
+                        />
+                    </Link>
 
-                <div className="flex flex-col gap-6">
-                    <Card className="rounded-xl">
-                        <CardHeader className="px-10 pt-8 pb-0 text-center">
-                            <CardTitle className="text-xl">{title}</CardTitle>
-                            <CardDescription>{description}</CardDescription>
+                    <Card elevation={3} sx={{ borderRadius: 3 }}>
+                        <CardHeader
+                            sx={{
+                                px: { xs: 4, md: 6 },
+                                pt: 4,
+                                pb: 0,
+                                textAlign: 'center',
+                            }}
+                        >
+                            {title && (
+                                <Typography variant="h5" component="h1" fontWeight={600}>
+                                    {title}
+                                </Typography>
+                            )}
+                            {description && (
+                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                    {description}
+                                </Typography>
+                            )}
                         </CardHeader>
-                        <CardContent className="px-10 py-8">
+                        <CardContent sx={{ px: { xs: 4, md: 6 }, py: 4 }}>
                             {children}
                         </CardContent>
                     </Card>
-                </div>
-            </div>
-        </div>
+                </Box>
+            </Container>
+        </Box>
     );
 }

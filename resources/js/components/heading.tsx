@@ -1,3 +1,5 @@
+import { Typography, Box } from '@mui/material';
+
 export default function Heading({
     title,
     description,
@@ -8,19 +10,20 @@ export default function Heading({
     variant?: 'default' | 'small';
 }) {
     return (
-        <header className={variant === 'small' ? '' : 'mb-8 space-y-0.5'}>
-            <h2
-                className={
-                    variant === 'small'
-                        ? 'mb-0.5 text-base font-medium'
-                        : 'text-xl font-semibold tracking-tight'
-                }
+        <Box sx={variant === 'small' ? {} : { mb: 4 }}>
+            <Typography
+                variant={variant === 'small' ? 'h6' : 'h5'}
+                component="h2"
+                fontWeight={variant === 'small' ? 500 : 600}
+                gutterBottom={!!description}
             >
                 {title}
-            </h2>
+            </Typography>
             {description && (
-                <p className="text-sm text-muted-foreground">{description}</p>
+                <Typography variant="body2" color="text.secondary">
+                    {description}
+                </Typography>
             )}
-        </header>
+        </Box>
     );
 }

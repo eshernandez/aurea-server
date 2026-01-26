@@ -1,36 +1,84 @@
-import {
-    SidebarGroup,
-    SidebarGroupLabel,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-} from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
+import {
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    Typography,
+    Box,
+} from '@mui/material';
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
+export function NavMain({
+    items = [],
+    onItemClick,
+    collapsed = false,
+}: {
+    items: NavItem[];
+    onItemClick?: () => void;
+    collapsed?: boolean;
+}) {
     const { isCurrentUrl } = useCurrentUrl();
 
     return (
-        <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
-            <SidebarMenu>
+        <Box sx={{ p: collapsed ? 1 : 2 }}>
+            {!collapsed && (
+                <Typography
+                    variant="overline"
+                    sx={{
+                        px: 2,
+                        py: 1,
+                        color: 'text.secondary',
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                    }}
+                >
+                    Platform
+                </Typography>
+            )}
+            <List>
                 {items.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                            asChild
-                            isActive={isCurrentUrl(item.href)}
-                            tooltip={{ children: item.title }}
+                    <ListItem key={item.title} disablePadding>
+                        <ListItemButton
+                            component={Link}
+                            href={item.href}
+                            selected={isCurrentUrl(item.href)}
+                            onClick={onItemClick}
+                            sx={{
+                                borderRadius: 1,
+                                mx: collapsed ? 0.5 : 1,
+                                justifyContent: collapsed ? 'center' : 'flex-start',
+                                minHeight: 48,
+                                '&.Mui-selected': {
+                                    bgcolor: 'primary.main',
+                                    color: 'primary.contrastText',
+                                    '&:hover': {
+                                        bgcolor: 'primary.dark',
+                                    },
+                                    '& .MuiListItemIcon-root': {
+                                        color: 'primary.contrastText',
+                                    },
+                                },
+                            }}
                         >
-                            <Link href={item.href} prefetch>
-                                {item.icon && <item.icon />}
-                                <span>{item.title}</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
+                            {item.icon && (
+                                <ListItemIcon
+                                    sx={{
+                                        minWidth: collapsed ? 0 : 40,
+                                        justifyContent: 'center',
+                                        color: 'inherit',
+                                    }}
+                                >
+                                    <item.icon size={20} />
+                                </ListItemIcon>
+                            )}
+                            {!collapsed && <ListItemText primary={item.title} />}
+                        </ListItemButton>
+                    </ListItem>
                 ))}
-            </SidebarMenu>
-        </SidebarGroup>
+            </List>
+        </Box>
     );
 }

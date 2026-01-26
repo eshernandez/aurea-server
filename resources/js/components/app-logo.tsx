@@ -1,16 +1,20 @@
-import AppLogoIcon from './app-logo-icon';
+import { Box, Typography } from '@mui/material';
 
 export default function AppLogo() {
     return (
-        <>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                <AppLogoIcon className="size-5 fill-current text-white dark:text-black" />
-            </div>
-            <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-semibold">
-                    Laravel Starter Kit
-                </span>
-            </div>
-        </>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img
+                    src="/img/logo-7.png"
+                    alt="Aurea"
+                    style={{ height: 32, width: 'auto' }}
+                />
+            </Box>
+            <Box sx={{ ml: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.2 }}>
+                    Aurea
+                </Typography>
+            </Box>
+        </Box>
     );
 }

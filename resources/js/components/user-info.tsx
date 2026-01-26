@@ -1,6 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import type { User } from '@/types';
+import { Avatar, Box, Typography } from '@mui/material';
 
 export function UserInfo({
     user,
@@ -12,21 +12,46 @@ export function UserInfo({
     const getInitials = useInitials();
 
     return (
-        <>
-            <Avatar className="h-8 w-8 overflow-hidden rounded-full">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                    {getInitials(user.name)}
-                </AvatarFallback>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Avatar
+                src={user.avatar || undefined}
+                alt={user.name}
+                sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                }}
+            >
+                {!user.avatar && getInitials(user.name)}
             </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    {user.name}
+                </Typography>
                 {showEmail && (
-                    <span className="truncate text-xs text-muted-foreground">
+                    <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{
+                            display: 'block',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
                         {user.email}
-                    </span>
+                    </Typography>
                 )}
-            </div>
-        </>
+            </Box>
+        </Box>
     );
 }

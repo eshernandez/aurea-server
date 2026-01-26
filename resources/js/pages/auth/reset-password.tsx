@@ -1,18 +1,36 @@
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { update } from '@/routes/password';
-import { Form, Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
+import {
+    Box,
+    Button,
+    TextField,
+    CircularProgress,
+} from '@mui/material';
 
 type Props = {
     token: string;
     email: string;
 };
 
-export default function ResetPassword({ token, email }: Props) {
+export default function ResetPassword({ token, email: emailProp }: Props) {
+    const { data, setData, post, processing, errors, reset } = useForm({
+        email: emailProp,
+        password: '',
+        password_confirmation: '',
+        token,
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(update().url, {
+            onSuccess: () => {
+                reset('password', 'password_confirmation');
+            },
+        });
+    };
+
     return (
         <AuthLayout
             title="Reset password"
@@ -20,74 +38,69 @@ export default function ResetPassword({ token, email }: Props) {
         >
             <Head title="Reset password" />
 
-            <Form
-                {...update.form()}
-                transform={(data) => ({ ...data, token, email })}
-                resetOnSuccess={['password', 'password_confirmation']}
-            >
-                {({ processing, errors }) => (
-                    <div className="grid gap-6">
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                name="email"
-                                autoComplete="email"
-                                value={email}
-                                className="mt-1 block w-full"
-                                readOnly
-                            />
-                            <InputError
-                                message={errors.email}
-                                className="mt-2"
-                            />
-                        </div>
+            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <TextField
+                    id="email"
+                    name="email"
+                    type="email"
+                    label="Email"
+                    value={data.email}
+                    InputProps={{
+                        readOnly: true,
+                    }}
+                    fullWidth
+                />
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                name="password"
-                                autoComplete="new-password"
-                                className="mt-1 block w-full"
-                                autoFocus
-                                placeholder="Password"
-                            />
-                            <InputError message={errors.password} />
-                        </div>
+                <TextField
+                    id="password"
+                    name="password"
+                    type="password"
+                    label="Password"
+                    value={data.password}
+                    onChange={(e) => setData('password', e.target.value)}
+                    required
+                    autoFocus
+                    autoComplete="new-password"
+                    placeholder="Password"
+                    error={!!errors.password}
+                    helperText={errors.password}
+                    fullWidth
+                />
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">
-                                Confirm password
-                            </Label>
-                            <Input
-                                id="password_confirmation"
-                                type="password"
-                                name="password_confirmation"
-                                autoComplete="new-password"
-                                className="mt-1 block w-full"
-                                placeholder="Confirm password"
-                            />
-                            <InputError
-                                message={errors.password_confirmation}
-                                className="mt-2"
-                            />
-                        </div>
+                <TextField
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    type="password"
+                    label="Confirm password"
+                    value={data.password_confirmation}
+                    onChange={(e) => setData('password_confirmation', e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="Confirm password"
+                    error={!!errors.password_confirmation}
+                    helperText={errors.password_confirmation}
+                    fullWidth
+                />
 
-                        <Button
-                            type="submit"
-                            className="mt-4 w-full"
-                            disabled={processing}
-                            data-test="reset-password-button"
-                        >
-                            {processing && <Spinner />}
-                            Reset password
-                        </Button>
-                    </div>
-                )}
-            </Form>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    disabled={processing}
+                    data-test="reset-password-button"
+                    sx={{ textTransform: 'none', mt: 2 }}
+                >
+                    {processing ? (
+                        <>
+                            <CircularProgress size={20} sx={{ mr: 1 }} />
+                            Resetting...
+                        </>
+                    ) : (
+                        'Reset password'
+                    )}
+                </Button>
+            </Box>
         </AuthLayout>
     );
 }

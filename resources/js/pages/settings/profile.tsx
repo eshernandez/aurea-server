@@ -2,16 +2,22 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { BreadcrumbItem, SharedData } from '@/types';
-import { Transition } from '@headlessui/react';
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, useForm } from '@inertiajs/react';
+import {
+    Box,
+    Button,
+    TextField,
+    Typography,
+    Link as MuiLink,
+    Alert,
+    Fade,
+    CircularProgress,
+} from '@mui/material';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -28,120 +34,116 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage<SharedData>().props;
+    const { data, setData, patch, processing, recentlySuccessful, errors } = useForm({
+        name: auth.user.name,
+        email: auth.user.email,
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        patch(ProfileController.update().url, {
+            preserveScroll: true,
+        });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Profile settings" />
 
-            <h1 className="sr-only">Profile Settings</h1>
+            <Typography component="h1" sx={{ position: 'absolute', left: '-9999px' }}>
+                Profile Settings
+            </Typography>
 
             <SettingsLayout>
-                <div className="space-y-6">
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <Heading
                         variant="small"
                         title="Profile information"
                         description="Update your name and email address"
                     />
 
-                    <Form
-                        {...ProfileController.update.form()}
-                        options={{
-                            preserveScroll: true,
-                        }}
-                        className="space-y-6"
-                    >
-                        {({ processing, recentlySuccessful, errors }) => (
-                            <>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="name">Name</Label>
+                    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <TextField
+                            id="name"
+                            name="name"
+                            label="Name"
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            required
+                            autoComplete="name"
+                            placeholder="Full name"
+                            error={!!errors.name}
+                            helperText={errors.name}
+                            fullWidth
+                        />
 
-                                    <Input
-                                        id="name"
-                                        className="mt-1 block w-full"
-                                        defaultValue={auth.user.name}
-                                        name="name"
-                                        required
-                                        autoComplete="name"
-                                        placeholder="Full name"
-                                    />
+                        <TextField
+                            id="email"
+                            name="email"
+                            type="email"
+                            label="Email address"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            required
+                            autoComplete="username"
+                            placeholder="Email address"
+                            error={!!errors.email}
+                            helperText={errors.email}
+                            fullWidth
+                        />
 
-                                    <InputError
-                                        className="mt-2"
-                                        message={errors.name}
-                                    />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="email">Email address</Label>
-
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        className="mt-1 block w-full"
-                                        defaultValue={auth.user.email}
-                                        name="email"
-                                        required
-                                        autoComplete="username"
-                                        placeholder="Email address"
-                                    />
-
-                                    <InputError
-                                        className="mt-2"
-                                        message={errors.email}
-                                    />
-                                </div>
-
-                                {mustVerifyEmail &&
-                                    auth.user.email_verified_at === null && (
-                                        <div>
-                                            <p className="-mt-4 text-sm text-muted-foreground">
-                                                Your email address is
-                                                unverified.{' '}
-                                                <Link
-                                                    href={send()}
-                                                    as="button"
-                                                    className="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                                                >
-                                                    Click here to resend the
-                                                    verification email.
-                                                </Link>
-                                            </p>
-
-                                            {status ===
-                                                'verification-link-sent' && (
-                                                <div className="mt-2 text-sm font-medium text-green-600">
-                                                    A new verification link has
-                                                    been sent to your email
-                                                    address.
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                <div className="flex items-center gap-4">
-                                    <Button
-                                        disabled={processing}
-                                        data-test="update-profile-button"
+                        {mustVerifyEmail && auth.user.email_verified_at === null && (
+                            <Box>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    Your email address is unverified.{' '}
+                                    <MuiLink
+                                        component={Link}
+                                        href={send().url}
+                                        sx={{
+                                            textDecoration: 'underline',
+                                            '&:hover': {
+                                                textDecoration: 'none',
+                                            },
+                                        }}
                                     >
-                                        Save
-                                    </Button>
+                                        Click here to resend the verification email.
+                                    </MuiLink>
+                                </Typography>
 
-                                    <Transition
-                                        show={recentlySuccessful}
-                                        enter="transition ease-in-out"
-                                        enterFrom="opacity-0"
-                                        leave="transition ease-in-out"
-                                        leaveTo="opacity-0"
-                                    >
-                                        <p className="text-sm text-neutral-600">
-                                            Saved
-                                        </p>
-                                    </Transition>
-                                </div>
-                            </>
+                                {status === 'verification-link-sent' && (
+                                    <Alert severity="success" sx={{ mt: 1 }}>
+                                        A new verification link has been sent to your email address.
+                                    </Alert>
+                                )}
+                            </Box>
                         )}
-                    </Form>
-                </div>
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                disabled={processing}
+                                data-test="update-profile-button"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                {processing ? (
+                                    <>
+                                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    'Save'
+                                )}
+                            </Button>
+
+                            <Fade in={recentlySuccessful}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Saved
+                                </Typography>
+                            </Fade>
+                        </Box>
+                    </Box>
+                </Box>
 
                 <DeleteUser />
             </SettingsLayout>

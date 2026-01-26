@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/react';
+import { Link as MuiLink } from '@mui/material';
 import type { ComponentProps } from 'react';
 
 type Props = ComponentProps<typeof Link>;
@@ -10,14 +10,17 @@ export default function TextLink({
     ...props
 }: Props) {
     return (
-        <Link
-            className={cn(
-                'text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500',
-                className,
-            )}
+        <MuiLink
+            component={Link}
+            sx={{
+                textDecoration: 'underline',
+                '&:hover': {
+                    textDecoration: 'none',
+                },
+            }}
             {...props}
         >
             {children}
-        </Link>
+        </MuiLink>
     );
 }

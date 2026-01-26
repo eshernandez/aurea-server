@@ -1,6 +1,4 @@
-import { SidebarProvider } from '@/components/ui/sidebar';
-import type { SharedData } from '@/types';
-import { usePage } from '@inertiajs/react';
+import { Box } from '@mui/material';
 import type { ReactNode } from 'react';
 
 type Props = {
@@ -9,13 +7,15 @@ type Props = {
 };
 
 export function AppShell({ children, variant = 'header' }: Props) {
-    const isOpen = usePage<SharedData>().props.sidebarOpen;
-
-    if (variant === 'header') {
-        return (
-            <div className="flex min-h-screen w-full flex-col">{children}</div>
-        );
-    }
-
-    return <SidebarProvider defaultOpen={isOpen}>{children}</SidebarProvider>;
+    return (
+        <Box
+            sx={{
+                display: 'flex',
+                minHeight: '100vh',
+                bgcolor: 'background.default',
+            }}
+        >
+            {children}
+        </Box>
+    );
 }

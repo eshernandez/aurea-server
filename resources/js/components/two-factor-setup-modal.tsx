@@ -1,51 +1,96 @@
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from '@/components/ui/input-otp';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import { confirm } from '@/routes/two-factor';
-import { Form } from '@inertiajs/react';
-import { REGEXP_ONLY_DIGITS } from 'input-otp';
+import { useForm } from '@inertiajs/react';
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    Box,
+    TextField,
+    Typography,
+    Divider,
+    IconButton,
+    CircularProgress,
+    InputAdornment,
+} from '@mui/material';
 import { Check, Copy, ScanLine } from 'lucide-react';
+import { Check as CheckIcon, ContentCopy as CopyIcon, QrCodeScanner as QrCodeIcon } from '@mui/icons-material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AlertError from './alert-error';
-import { Spinner } from './ui/spinner';
 
 function GridScanIcon() {
     return (
-        <div className="mb-3 rounded-full border border-border bg-card p-0.5 shadow-sm">
-            <div className="relative overflow-hidden rounded-full border border-border bg-muted p-2.5">
-                <div className="absolute inset-0 grid grid-cols-5 opacity-50">
+        <Box
+            sx={{
+                mb: 3,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+            }}
+        >
+            <Box
+                sx={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: '50%',
+                    border: 2,
+                    borderColor: 'divider',
+                    bgcolor: 'background.paper',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    overflow: 'hidden',
+                }}
+            >
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(5, 1fr)',
+                        opacity: 0.5,
+                    }}
+                >
                     {Array.from({ length: 5 }, (_, i) => (
-                        <div
+                        <Box
                             key={`col-${i + 1}`}
-                            className="border-r border-border last:border-r-0"
+                            sx={{
+                                borderRight: 1,
+                                borderColor: 'divider',
+                                '&:last-child': { borderRight: 0 },
+                            }}
                         />
                     ))}
-                </div>
-                <div className="absolute inset-0 grid grid-rows-5 opacity-50">
+                </Box>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'grid',
+                        gridTemplateRows: 'repeat(5, 1fr)',
+                        opacity: 0.5,
+                    }}
+                >
                     {Array.from({ length: 5 }, (_, i) => (
-                        <div
+                        <Box
                             key={`row-${i + 1}`}
-                            className="border-b border-border last:border-b-0"
+                            sx={{
+                                borderBottom: 1,
+                                borderColor: 'divider',
+                                '&:last-child': { borderBottom: 0 },
+                            }}
                         />
                     ))}
-                </div>
-                <ScanLine className="relative z-20 size-6 text-foreground" />
-            </div>
-        </div>
+                </Box>
+                <QrCodeIcon sx={{ position: 'relative', zIndex: 2 }} />
+            </Box>
+        </Box>
     );
 }
 
@@ -64,75 +109,99 @@ function TwoFactorSetupStep({
 }) {
     const { resolvedAppearance } = useAppearance();
     const [copiedText, copy] = useClipboard();
-    const IconComponent = copiedText === manualSetupKey ? Check : Copy;
+    const isCopied = copiedText === manualSetupKey;
 
     return (
         <>
             {errors?.length ? (
                 <AlertError errors={errors} />
             ) : (
-                <>
-                    <div className="mx-auto flex max-w-md overflow-hidden">
-                        <div className="mx-auto aspect-square w-64 rounded-lg border border-border">
-                            <div className="z-10 flex h-full w-full items-center justify-center p-5">
-                                {qrCodeSvg ? (
-                                    <div
-                                        className="aspect-square w-full rounded-lg bg-white p-2 [&_svg]:size-full"
-                                        dangerouslySetInnerHTML={{
-                                            __html: qrCodeSvg,
-                                        }}
-                                        style={{
-                                            filter:
-                                                resolvedAppearance === 'dark'
-                                                    ? 'invert(1) brightness(1.5)'
-                                                    : undefined,
-                                        }}
-                                    />
-                                ) : (
-                                    <Spinner />
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%' }}>
+                    <Box
+                        sx={{
+                            mx: 'auto',
+                            maxWidth: 400,
+                            aspectRatio: '1/1',
+                            border: 1,
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            p: 2,
+                            bgcolor: 'background.paper',
+                        }}
+                    >
+                        {qrCodeSvg ? (
+                            <Box
+                                sx={{
+                                    width: '100%',
+                                    aspectRatio: '1/1',
+                                    bgcolor: 'white',
+                                    p: 1,
+                                    borderRadius: 1,
+                                    '& svg': {
+                                        width: '100%',
+                                        height: '100%',
+                                    },
+                                    filter:
+                                        resolvedAppearance === 'dark'
+                                            ? 'invert(1) brightness(1.5)'
+                                            : undefined,
+                                }}
+                                dangerouslySetInnerHTML={{
+                                    __html: qrCodeSvg,
+                                }}
+                            />
+                        ) : (
+                            <CircularProgress />
+                        )}
+                    </Box>
 
-                    <div className="flex w-full space-x-5">
-                        <Button className="w-full" onClick={onNextStep}>
-                            {buttonText}
-                        </Button>
-                    </div>
+                    <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={onNextStep}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        {buttonText}
+                    </Button>
 
-                    <div className="relative flex w-full items-center justify-center">
-                        <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
-                        <span className="relative bg-card px-2 py-1">
+                    <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', my: 2 }}>
+                        <Divider sx={{ flex: 1 }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
                             or, enter the code manually
-                        </span>
-                    </div>
+                        </Typography>
+                        <Divider sx={{ flex: 1 }} />
+                    </Box>
 
-                    <div className="flex w-full space-x-2">
-                        <div className="flex w-full items-stretch overflow-hidden rounded-xl border border-border">
-                            {!manualSetupKey ? (
-                                <div className="flex h-full w-full items-center justify-center bg-muted p-3">
-                                    <Spinner />
-                                </div>
-                            ) : (
-                                <>
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={manualSetupKey}
-                                        className="h-full w-full bg-background p-3 text-foreground outline-none"
-                                    />
-                                    <button
-                                        onClick={() => copy(manualSetupKey)}
-                                        className="border-l border-border px-3 hover:bg-muted"
-                                    >
-                                        <IconComponent className="w-4" />
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                        <TextField
+                            value={manualSetupKey || ''}
+                            InputProps={{
+                                readOnly: true,
+                                endAdornment: manualSetupKey ? (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            onClick={() => copy(manualSetupKey || '')}
+                                            edge="end"
+                                            size="small"
+                                        >
+                                            {isCopied ? <CheckIcon /> : <CopyIcon />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ) : (
+                                    <InputAdornment position="end">
+                                        <CircularProgress size={20} />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            fullWidth
+                            placeholder="Loading setup key..."
+                        />
+                    </Box>
+                </Box>
             )}
         </>
     );
@@ -146,85 +215,78 @@ function TwoFactorVerificationStep({
     onBack: () => void;
 }) {
     const [code, setCode] = useState<string>('');
-    const pinInputContainerRef = useRef<HTMLDivElement>(null);
+    const pinInputRef = useRef<HTMLInputElement>(null);
+
+    const { data, setData, post, processing, errors } = useForm({
+        code: '',
+    });
 
     useEffect(() => {
         setTimeout(() => {
-            pinInputContainerRef.current?.querySelector('input')?.focus();
+            pinInputRef.current?.focus();
         }, 0);
     }, []);
 
-    return (
-        <Form
-            {...confirm.form()}
-            onSuccess={() => onClose()}
-            resetOnError
-            resetOnSuccess
-        >
-            {({
-                processing,
-                errors,
-            }: {
-                processing: boolean;
-                errors?: { confirmTwoFactorAuthentication?: { code?: string } };
-            }) => (
-                <>
-                    <div
-                        ref={pinInputContainerRef}
-                        className="relative w-full space-y-3"
-                    >
-                        <div className="flex w-full flex-col items-center space-y-3 py-2">
-                            <InputOTP
-                                id="otp"
-                                name="code"
-                                maxLength={OTP_MAX_LENGTH}
-                                onChange={setCode}
-                                disabled={processing}
-                                pattern={REGEXP_ONLY_DIGITS}
-                            >
-                                <InputOTPGroup>
-                                    {Array.from(
-                                        { length: OTP_MAX_LENGTH },
-                                        (_, index) => (
-                                            <InputOTPSlot
-                                                key={index}
-                                                index={index}
-                                            />
-                                        ),
-                                    )}
-                                </InputOTPGroup>
-                            </InputOTP>
-                            <InputError
-                                message={
-                                    errors?.confirmTwoFactorAuthentication?.code
-                                }
-                            />
-                        </div>
+    const handleCodeChange = (value: string) => {
+        const digitsOnly = value.replace(/\D/g, '').slice(0, OTP_MAX_LENGTH);
+        setCode(digitsOnly);
+        setData('code', digitsOnly);
+    };
 
-                        <div className="flex w-full space-x-5">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="flex-1"
-                                onClick={onBack}
-                                disabled={processing}
-                            >
-                                Back
-                            </Button>
-                            <Button
-                                type="submit"
-                                className="flex-1"
-                                disabled={
-                                    processing || code.length < OTP_MAX_LENGTH
-                                }
-                            >
-                                Confirm
-                            </Button>
-                        </div>
-                    </div>
-                </>
-            )}
-        </Form>
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(confirm().url, {
+            onSuccess: () => onClose(),
+        });
+    };
+
+    return (
+        <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+                inputRef={pinInputRef}
+                value={code}
+                onChange={(e) => handleCodeChange(e.target.value)}
+                label="Authentication Code"
+                placeholder="Enter 6-digit code"
+                required
+                disabled={processing}
+                error={!!errors?.confirmTwoFactorAuthentication?.code}
+                helperText={errors?.confirmTwoFactorAuthentication?.code}
+                inputProps={{
+                    maxLength: OTP_MAX_LENGTH,
+                    pattern: '[0-9]*',
+                }}
+                sx={{
+                    '& input': {
+                        textAlign: 'center',
+                        fontSize: '1.5rem',
+                        letterSpacing: '0.5rem',
+                        fontFamily: 'monospace',
+                    },
+                }}
+                fullWidth
+            />
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={onBack}
+                    disabled={processing}
+                    sx={{ flex: 1, textTransform: 'none' }}
+                >
+                    Back
+                </Button>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={processing || code.length < OTP_MAX_LENGTH}
+                    sx={{ flex: 1, textTransform: 'none' }}
+                >
+                    {processing ? <CircularProgress size={20} /> : 'Confirm'}
+                </Button>
+            </Box>
+        </Box>
     );
 }
 
@@ -251,8 +313,7 @@ export default function TwoFactorSetupModal({
     fetchSetupData,
     errors,
 }: Props) {
-    const [showVerificationStep, setShowVerificationStep] =
-        useState<boolean>(false);
+    const [showVerificationStep, setShowVerificationStep] = useState<boolean>(false);
 
     const modalConfig = useMemo<{
         title: string;
@@ -271,8 +332,7 @@ export default function TwoFactorSetupModal({
         if (showVerificationStep) {
             return {
                 title: 'Verify Authentication Code',
-                description:
-                    'Enter the 6-digit code from your authenticator app',
+                description: 'Enter the 6-digit code from your authenticator app',
                 buttonText: 'Continue',
             };
         }
@@ -315,17 +375,18 @@ export default function TwoFactorSetupModal({
     }, [onClose, resetModalState]);
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader className="flex items-center justify-center">
-                    <GridScanIcon />
-                    <DialogTitle>{modalConfig.title}</DialogTitle>
-                    <DialogDescription className="text-center">
-                        {modalConfig.description}
-                    </DialogDescription>
-                </DialogHeader>
-
-                <div className="flex flex-col items-center space-y-5">
+        <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
+            <DialogTitle sx={{ textAlign: 'center', pt: 4 }}>
+                <GridScanIcon />
+                <Typography variant="h6" component="div" gutterBottom>
+                    {modalConfig.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    {modalConfig.description}
+                </Typography>
+            </DialogTitle>
+            <DialogContent>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, py: 2 }}>
                     {showVerificationStep ? (
                         <TwoFactorVerificationStep
                             onClose={onClose}
@@ -340,7 +401,7 @@ export default function TwoFactorSetupModal({
                             errors={errors}
                         />
                     )}
-                </div>
+                </Box>
             </DialogContent>
         </Dialog>
     );

@@ -1,16 +1,20 @@
-import { Button } from '@/components/ui/button';
+import { regenerateRecoveryCodes } from '@/routes/two-factor';
+import { useForm } from '@inertiajs/react';
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import { regenerateRecoveryCodes } from '@/routes/two-factor';
-import { Form } from '@inertiajs/react';
+    Typography,
+    Button,
+    Box,
+    Fade,
+    CircularProgress,
+    Alert,
+} from '@mui/material';
 import { Eye, EyeOff, LockKeyhole, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AlertError from './alert-error';
+import { Visibility, VisibilityOff, RefreshCw as RefreshCwIcon, Lock as LockIcon } from '@mui/icons-material';
 
 type Props = {
     recoveryCodesList: string[];
@@ -26,6 +30,8 @@ export default function TwoFactorRecoveryCodes({
     const [codesAreVisible, setCodesAreVisible] = useState<boolean>(false);
     const codesSectionRef = useRef<HTMLDivElement | null>(null);
     const canRegenerateCodes = recoveryCodesList.length > 0 && codesAreVisible;
+
+    const { post, processing } = useForm({});
 
     const toggleCodesVisibility = useCallback(async () => {
         if (!codesAreVisible && !recoveryCodesList.length) {
@@ -50,114 +56,131 @@ export default function TwoFactorRecoveryCodes({
         }
     }, [recoveryCodesList.length, fetchRecoveryCodes]);
 
-    const RecoveryCodeIconComponent = codesAreVisible ? EyeOff : Eye;
+    const handleRegenerate = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(regenerateRecoveryCodes().url, {
+            preserveScroll: true,
+            onSuccess: fetchRecoveryCodes,
+        });
+    };
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="flex gap-3">
-                    <LockKeyhole className="size-4" aria-hidden="true" />
-                    2FA Recovery Codes
-                </CardTitle>
-                <CardDescription>
+            <CardHeader
+                title={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LockIcon fontSize="small" />
+                        <Typography variant="h6">2FA Recovery Codes</Typography>
+                    </Box>
+                }
+            />
+            <CardContent>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     Recovery codes let you regain access if you lose your 2FA
                     device. Store them in a secure password manager.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between">
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2 }}>
                     <Button
                         onClick={toggleCodesVisibility}
-                        className="w-fit"
+                        variant="outlined"
+                        startIcon={codesAreVisible ? <VisibilityOff /> : <Visibility />}
                         aria-expanded={codesAreVisible}
                         aria-controls="recovery-codes-section"
+                        sx={{ textTransform: 'none', alignSelf: 'flex-start' }}
                     >
-                        <RecoveryCodeIconComponent
-                            className="size-4"
-                            aria-hidden="true"
-                        />
                         {codesAreVisible ? 'Hide' : 'View'} Recovery Codes
                     </Button>
 
                     {canRegenerateCodes && (
-                        <Form
-                            {...regenerateRecoveryCodes.form()}
-                            options={{ preserveScroll: true }}
-                            onSuccess={fetchRecoveryCodes}
-                        >
-                            {({ processing }) => (
-                                <Button
-                                    variant="secondary"
-                                    type="submit"
-                                    disabled={processing}
-                                    aria-describedby="regenerate-warning"
-                                >
-                                    <RefreshCw /> Regenerate Codes
-                                </Button>
-                            )}
-                        </Form>
+                        <Box component="form" onSubmit={handleRegenerate}>
+                            <Button
+                                variant="outlined"
+                                type="submit"
+                                disabled={processing}
+                                startIcon={processing ? <CircularProgress size={16} /> : <RefreshCwIcon />}
+                                aria-describedby="regenerate-warning"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                Regenerate Codes
+                            </Button>
+                        </Box>
                     )}
-                </div>
-                <div
-                    id="recovery-codes-section"
-                    className={`relative overflow-hidden transition-all duration-300 ${codesAreVisible ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}
-                    aria-hidden={!codesAreVisible}
-                >
-                    <div className="mt-3 space-y-3">
+                </Box>
+                <Fade in={codesAreVisible}>
+                    <Box
+                        id="recovery-codes-section"
+                        sx={{
+                            display: codesAreVisible ? 'block' : 'none',
+                        }}
+                        aria-hidden={!codesAreVisible}
+                    >
                         {errors?.length ? (
                             <AlertError errors={errors} />
                         ) : (
-                            <>
-                                <div
+                            <Box>
+                                <Box
                                     ref={codesSectionRef}
-                                    className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
+                                    sx={{
+                                        display: 'grid',
+                                        gap: 1,
+                                        p: 2,
+                                        bgcolor: 'action.hover',
+                                        borderRadius: 2,
+                                        fontFamily: 'monospace',
+                                        fontSize: '0.875rem',
+                                    }}
                                     role="list"
                                     aria-label="Recovery codes"
                                 >
                                     {recoveryCodesList.length ? (
                                         recoveryCodesList.map((code, index) => (
-                                            <div
+                                            <Box
                                                 key={index}
                                                 role="listitem"
-                                                className="select-text"
+                                                sx={{
+                                                    userSelect: 'text',
+                                                }}
                                             >
                                                 {code}
-                                            </div>
+                                            </Box>
                                         ))
                                     ) : (
-                                        <div
-                                            className="space-y-2"
-                                            aria-label="Loading recovery codes"
-                                        >
-                                            {Array.from(
-                                                { length: 8 },
-                                                (_, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="h-4 animate-pulse rounded bg-muted-foreground/20"
-                                                        aria-hidden="true"
-                                                    />
-                                                ),
-                                            )}
-                                        </div>
+                                        <Box aria-label="Loading recovery codes">
+                                            {Array.from({ length: 8 }, (_, index) => (
+                                                <Box
+                                                    key={index}
+                                                    sx={{
+                                                        height: 16,
+                                                        mb: 0.5,
+                                                        borderRadius: 1,
+                                                        bgcolor: 'action.disabledBackground',
+                                                        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                                                    }}
+                                                    aria-hidden="true"
+                                                />
+                                            ))}
+                                        </Box>
                                     )}
-                                </div>
+                                </Box>
 
-                                <div className="text-xs text-muted-foreground select-none">
-                                    <p id="regenerate-warning">
-                                        Each recovery code can be used once to
-                                        access your account and will be removed
-                                        after use. If you need more, click{' '}
-                                        <span className="font-bold">
-                                            Regenerate Codes
-                                        </span>{' '}
-                                        above.
-                                    </p>
-                                </div>
-                            </>
+                                <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ display: 'block', mt: 2 }}
+                                    id="regenerate-warning"
+                                >
+                                    Each recovery code can be used once to
+                                    access your account and will be removed
+                                    after use. If you need more, click{' '}
+                                    <Box component="span" fontWeight={600}>
+                                        Regenerate Codes
+                                    </Box>{' '}
+                                    above.
+                                </Typography>
+                            </Box>
                         )}
-                    </div>
-                </div>
+                    </Box>
+                </Fade>
             </CardContent>
         </Card>
     );

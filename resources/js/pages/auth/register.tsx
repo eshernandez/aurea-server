@@ -1,114 +1,124 @@
-import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
-import { Form, Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
+import {
+    Box,
+    Button,
+    TextField,
+    Typography,
+    Link as MuiLink,
+} from '@mui/material';
+import { PersonAdd } from '@mui/icons-material';
 
 export default function Register() {
+    const { data, setData, post, processing, errors, reset } = useForm({
+        name: '',
+        email: '',
+        password: '',
+        password_confirmation: '',
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(store().url, {
+            onSuccess: () => {
+                reset('password', 'password_confirmation');
+            },
+        });
+    };
+
     return (
         <AuthLayout
-            title="Create an account"
-            description="Enter your details below to create your account"
+            title="Crear Cuenta"
+            description="Ingresa tus datos para crear tu cuenta en Aurea"
         >
-            <Head title="Register" />
-            <Form
-                {...store.form()}
-                resetOnSuccess={['password', 'password_confirmation']}
-                disableWhileProcessing
-                className="flex flex-col gap-6"
-            >
-                {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
-                                <Input
-                                    id="name"
-                                    type="text"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="name"
-                                    name="name"
-                                    placeholder="Full name"
-                                />
-                                <InputError
-                                    message={errors.name}
-                                    className="mt-2"
-                                />
-                            </div>
+            <Head title="Registrarse - Aurea" />
+            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <TextField
+                    id="name"
+                    name="name"
+                    type="text"
+                    label="Nombre completo"
+                    value={data.name}
+                    onChange={(e) => setData('name', e.target.value)}
+                    required
+                    autoFocus
+                    autoComplete="name"
+                    placeholder="Nombre completo"
+                    error={!!errors.name}
+                    helperText={errors.name}
+                    fullWidth
+                />
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="email"
-                                    name="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
+                <TextField
+                    id="email"
+                    name="email"
+                    type="email"
+                    label="Email"
+                    value={data.email}
+                    onChange={(e) => setData('email', e.target.value)}
+                    required
+                    autoComplete="email"
+                    placeholder="email@example.com"
+                    error={!!errors.email}
+                    helperText={errors.email}
+                    fullWidth
+                />
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    required
-                                    tabIndex={3}
-                                    autoComplete="new-password"
-                                    name="password"
-                                    placeholder="Password"
-                                />
-                                <InputError message={errors.password} />
-                            </div>
+                <TextField
+                    id="password"
+                    name="password"
+                    type="password"
+                    label="Contraseña"
+                    value={data.password}
+                    onChange={(e) => setData('password', e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="Contraseña"
+                    error={!!errors.password}
+                    helperText={errors.password}
+                    fullWidth
+                />
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
-                                <Input
-                                    id="password_confirmation"
-                                    type="password"
-                                    required
-                                    tabIndex={4}
-                                    autoComplete="new-password"
-                                    name="password_confirmation"
-                                    placeholder="Confirm password"
-                                />
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
-                            </div>
+                <TextField
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    type="password"
+                    label="Confirmar contraseña"
+                    value={data.password_confirmation}
+                    onChange={(e) => setData('password_confirmation', e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    placeholder="Confirmar contraseña"
+                    error={!!errors.password_confirmation}
+                    helperText={errors.password_confirmation}
+                    fullWidth
+                />
 
-                            <Button
-                                type="submit"
-                                className="mt-2 w-full"
-                                tabIndex={5}
-                                data-test="register-user-button"
-                            >
-                                {processing && <Spinner />}
-                                Create account
-                            </Button>
-                        </div>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    disabled={processing}
+                    startIcon={<PersonAdd />}
+                    sx={{ textTransform: 'none', mt: 2 }}
+                >
+                    {processing ? 'Creando cuenta...' : 'Crear Cuenta'}
+                </Button>
 
-                        <div className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6}>
-                                Log in
-                            </TextLink>
-                        </div>
-                    </>
-                )}
-            </Form>
+                <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+                    ¿Ya tienes una cuenta?{' '}
+                    <MuiLink
+                        href={login()}
+                        component="a"
+                        sx={{ fontWeight: 600 }}
+                    >
+                        Inicia sesión
+                    </MuiLink>
+                </Typography>
+            </Box>
         </AuthLayout>
     );
 }
