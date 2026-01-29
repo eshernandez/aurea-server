@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class QuoteUserHistory extends Model
 {
+    protected $table = 'quote_user_history';
+
     protected $fillable = [
         'user_id',
         'quote_id',

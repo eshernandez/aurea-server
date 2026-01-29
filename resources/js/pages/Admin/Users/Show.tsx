@@ -1,6 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Box,
     Container,
@@ -13,8 +14,11 @@ import {
     Grid,
     Divider,
     Stack,
+    Snackbar,
+    Alert,
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon, CheckCircle as CheckCircleIcon, Cancel as CancelIcon } from '@mui/icons-material';
+import ConfirmationDialog from '@/components/confirmation-dialog';
 
 interface UserPreference {
     id: number;
@@ -48,6 +52,7 @@ interface User {
     name: string;
     email: string;
     is_admin: boolean;
+    email_verified_at: string | null;
     created_at: string;
     preferences?: UserPreference;
     device_tokens?: DeviceToken[];
@@ -82,6 +87,31 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function UsersShow({ user, stats }: Props) {
+    const { flash } = usePage().props as any;
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'info' | 'error' });
+    const [confirmDialog, setConfirmDialog] = useState<{
+        open: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        confirmColor?: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
+    }>({
+        open: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    });
+
+    useEffect(() => {
+        if (flash?.success) {
+            setSnackbar({ open: true, message: flash.success, severity: 'success' });
+        } else if (flash?.info) {
+            setSnackbar({ open: true, message: flash.info, severity: 'info' });
+        } else if (flash?.error) {
+            setSnackbar({ open: true, message: flash.error, severity: 'error' });
+        }
+    }, [flash]);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={user.name} />
@@ -95,15 +125,62 @@ export default function UsersShow({ user, stats }: Props) {
                             Detalles del usuario
                         </Typography>
                     </Box>
-                    <Button
-                        component={Link}
-                        href="/admin/users"
-                        variant="outlined"
-                        startIcon={<ArrowBackIcon />}
-                        sx={{ textTransform: 'none' }}
-                    >
-                        Volver
-                    </Button>
+                    <Stack direction="row" spacing={2}>
+                        {!user.email_verified_at ? (
+                            <Button
+                                onClick={() => {
+                                    setConfirmDialog({
+                                        open: true,
+                                        title: 'Activar usuario',
+                                        message: '¿Estás seguro de activar este usuario? Esto verificará su correo electrónico.',
+                                        confirmColor: 'success',
+                                        onConfirm: () => {
+                                            setConfirmDialog({ ...confirmDialog, open: false });
+                                            router.post(`/admin/users/${user.id}/activate`, {}, {
+                                                preserveScroll: true,
+                                            });
+                                        },
+                                    });
+                                }}
+                                variant="contained"
+                                color="success"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                Activar Usuario
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={() => {
+                                    setConfirmDialog({
+                                        open: true,
+                                        title: 'Desactivar usuario',
+                                        message: '¿Estás seguro de desactivar este usuario? Esto eliminará la verificación de su correo electrónico.',
+                                        confirmColor: 'error',
+                                        onConfirm: () => {
+                                            setConfirmDialog({ ...confirmDialog, open: false });
+                                            router.post(`/admin/users/${user.id}/deactivate`, {}, {
+                                                preserveScroll: true,
+                                            });
+                                        },
+                                    });
+                                }}
+                                variant="contained"
+                                color="error"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                Desactivar Usuario
+                            </Button>
+                        )}
+                        <Button
+                            component={Link}
+                            href="/admin/users"
+                            variant="outlined"
+                            startIcon={<ArrowBackIcon />}
+                            sx={{ textTransform: 'none' }}
+                        >
+                            Volver
+                        </Button>
+                    </Stack>
                 </Box>
 
                 {/* User Info */}
@@ -133,6 +210,29 @@ export default function UsersShow({ user, stats }: Props) {
                                 <Typography variant="body1" sx={{ mt: 0.5 }}>
                                     {user.email}
                                 </Typography>
+                            </Box>
+                            <Divider />
+                            <Box>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                                    Estado de Verificación
+                                </Typography>
+                                <Box sx={{ mt: 0.5 }}>
+                                    {user.email_verified_at ? (
+                                        <Chip
+                                            icon={<CheckCircleIcon />}
+                                            label="Correo Verificado"
+                                            color="success"
+                                            size="small"
+                                        />
+                                    ) : (
+                                        <Chip
+                                            icon={<CancelIcon />}
+                                            label="Pendiente de Verificación"
+                                            color="warning"
+                                            size="small"
+                                        />
+                                    )}
+                                </Box>
                             </Box>
                             <Divider />
                             <Box>
@@ -328,6 +428,27 @@ export default function UsersShow({ user, stats }: Props) {
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Snackbar for flash messages */}
+                <Snackbar
+                    open={snackbar.open}
+                    autoHideDuration={6000}
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                >
+                    <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+                        {snackbar.message}
+                    </Alert>
+                </Snackbar>
+
+                <ConfirmationDialog
+                    open={confirmDialog.open}
+                    onClose={() => setConfirmDialog({ ...confirmDialog, open: false })}
+                    onConfirm={confirmDialog.onConfirm}
+                    title={confirmDialog.title}
+                    message={confirmDialog.message}
+                    confirmColor={confirmDialog.confirmColor}
+                />
             </Container>
         </AppLayout>
     );

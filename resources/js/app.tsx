@@ -18,6 +18,12 @@ createInertiaApp({
             import.meta.glob('./pages/**/*.tsx'),
         ),
     setup({ el, App, props }) {
+        // Verify that the element exists and is a valid Node
+        if (!el || !(el instanceof Node)) {
+            console.error('Invalid root element for Inertia app');
+            return;
+        }
+
         const root = createRoot(el);
 
         root.render(

@@ -64,4 +64,34 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')
             ->with('success', 'Estado del usuario actualizado.');
     }
+
+    public function activate(User $user): RedirectResponse
+    {
+        // Activar usuario marcando email como verificado
+        if (!$user->email_verified_at) {
+            $user->email_verified_at = now();
+            $user->save();
+
+            return redirect()->back()
+                ->with('success', 'Usuario activado correctamente. El correo ha sido verificado.');
+        }
+
+        return redirect()->back()
+            ->with('info', 'El usuario ya está activado.');
+    }
+
+    public function deactivate(User $user): RedirectResponse
+    {
+        // Desactivar usuario eliminando la verificación de email
+        if ($user->email_verified_at) {
+            $user->email_verified_at = null;
+            $user->save();
+
+            return redirect()->back()
+                ->with('success', 'Usuario desactivado correctamente. El correo ya no está verificado.');
+        }
+
+        return redirect()->back()
+            ->with('info', 'El usuario ya está desactivado.');
+    }
 }

@@ -12,7 +12,7 @@ import {
     Typography,
     useTheme,
 } from '@mui/material';
-import { LayoutGrid, Users, FolderTree, FileText, Quote } from 'lucide-react';
+import { LayoutGrid, Users, FolderTree, FileText, Quote, Bell } from 'lucide-react';
 import AppLogo from './app-logo';
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
@@ -37,6 +37,11 @@ export function AppSidebar({ onClose, collapsed = false }: { onClose?: () => voi
                 title: 'Usuarios',
                 href: '/admin/users',
                 icon: Users,
+            },
+            {
+                title: 'Notificaciones',
+                href: '/admin/notifications',
+                icon: Bell,
             },
             {
                 title: 'Categorías',

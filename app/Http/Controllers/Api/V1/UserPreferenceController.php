@@ -15,7 +15,7 @@ class UserPreferenceController extends Controller
 
         if (! $preferences) {
             $preferences = $user->preferences()->create([
-                'timezone' => 'UTC',
+                'timezone' => 'America/Bogota', // Colombia por defecto
                 'notifications_enabled' => true,
                 'notifications_per_day' => 3,
                 'preferred_hours' => [8, 12, 18],
@@ -34,7 +34,7 @@ class UserPreferenceController extends Controller
 
         if (! $preferences) {
             $preferences = $user->preferences()->create([
-                'timezone' => $request->input('timezone', 'UTC'),
+                'timezone' => $request->input('timezone', 'America/Bogota'), // Colombia por defecto
                 'notifications_enabled' => $request->input('notifications_enabled', true),
                 'notifications_per_day' => $request->input('notifications_per_day', 3),
                 'preferred_hours' => $request->input('preferred_hours', [8, 12, 18]),

@@ -26,6 +26,7 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { Search as SearchIcon, Add as AddIcon, Visibility, Edit, Delete } from '@mui/icons-material';
+import ConfirmationDialog from '@/components/confirmation-dialog';
 
 interface Category {
     id: number;
@@ -103,12 +104,32 @@ export default function ArticlesIndex({ articles, categories, filters: initialFi
         });
     };
 
+    const [confirmDialog, setConfirmDialog] = useState<{
+        open: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        confirmColor?: 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success';
+    }>({
+        open: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    });
+
     const handleDelete = (id: number) => {
-        if (confirm('¿Estás seguro de eliminar este artículo?')) {
-            router.delete(`/admin/articles/${id}`, {
-                preserveScroll: true,
-            });
-        }
+        setConfirmDialog({
+            open: true,
+            title: 'Eliminar artículo',
+            message: '¿Estás seguro de eliminar este artículo?',
+            confirmColor: 'error',
+            onConfirm: () => {
+                setConfirmDialog({ ...confirmDialog, open: false });
+                router.delete(`/admin/articles/${id}`, {
+                    preserveScroll: true,
+                });
+            },
+        });
     };
 
     return (
@@ -320,6 +341,15 @@ export default function ArticlesIndex({ articles, categories, filters: initialFi
                     </CardContent>
                 </Card>
             </Container>
+
+            <ConfirmationDialog
+                open={confirmDialog.open}
+                onClose={() => setConfirmDialog({ ...confirmDialog, open: false })}
+                onConfirm={confirmDialog.onConfirm}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                confirmColor={confirmDialog.confirmColor}
+            />
         </AppLayout>
     );
 }

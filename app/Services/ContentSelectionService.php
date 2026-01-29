@@ -7,21 +7,34 @@ use App\Models\Quote;
 use App\Models\QuoteUserHistory;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class ContentSelectionService
 {
     /**
-     * Select a quote for the user, avoiding recent repetitions
+     * Select a quote for the user, avoiding repetitions.
+     *
+     * Regla actual:
+     * - No repetir una frase que ya se haya enviado antes a ese usuario.
+     * - Si ya se enviaron todas las frases activas a ese usuario, NO se selecciona nada
+     *   (la notificación para ese horario se omite).
      */
     public function selectQuote(User $user, ?array $preferredCategoryIds = null): ?Quote
     {
-        $daysToAvoid = 7; // Don't repeat quotes within 7 days
-
-        // Get quotes sent to this user in the last N days
-        $recentQuoteIds = QuoteUserHistory::where('user_id', $user->id)
-            ->where('sent_at', '>=', Carbon::now()->subDays($daysToAvoid))
-            ->pluck('quote_id')
-            ->toArray();
+        // Obtener TODAS las frases que ya se han enviado a este usuario.
+        // Si la tabla no existe (por ejemplo en entornos locales sin migración),
+        // continuamos sin filtrar para no romper el flujo.
+        $recentQuoteIds = [];
+        try {
+            $recentQuoteIds = QuoteUserHistory::where('user_id', $user->id)
+                ->pluck('quote_id')
+                ->toArray();
+        } catch (\Exception $e) {
+            // La tabla puede no existir aún; continuar sin filtro de historial.
+            Log::warning('QuoteUserHistory table not found, continuing without history filter', [
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         // Build query for available quotes
         $query = Quote::where('is_active', true)
@@ -75,10 +88,19 @@ class ContentSelectionService
      */
     public function recordQuoteSent(User $user, Quote $quote): void
     {
-        QuoteUserHistory::create([
-            'user_id' => $user->id,
-            'quote_id' => $quote->id,
-            'sent_at' => now(),
-        ]);
+        try {
+            QuoteUserHistory::create([
+                'user_id' => $user->id,
+                'quote_id' => $quote->id,
+                'sent_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            // Log error but don't fail the notification
+            Log::warning('Failed to record quote in history', [
+                'user_id' => $user->id,
+                'quote_id' => $quote->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

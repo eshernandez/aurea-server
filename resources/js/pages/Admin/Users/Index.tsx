@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Box,
     Container,
@@ -24,9 +24,11 @@ import {
     Chip,
     Pagination,
     Stack,
+    Snackbar,
+    Alert,
 } from '@mui/material';
-import { useState } from 'react';
-import { Search as SearchIcon } from '@mui/icons-material';
+import { useState, useEffect } from 'react';
+import { Search as SearchIcon, CheckCircle as CheckCircleIcon, Cancel as CancelIcon } from '@mui/icons-material';
 
 interface UserPreference {
     id: number;
@@ -39,6 +41,7 @@ interface User {
     name: string;
     email: string;
     is_admin: boolean;
+    email_verified_at: string | null;
     created_at: string;
     preferences?: UserPreference;
 }
@@ -76,8 +79,20 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function UsersIndex({ users, filters: initialFilters }: Props) {
+    const { flash } = usePage().props as any;
     const [filters, setFilters] = useState(initialFilters);
     const [search, setSearch] = useState(initialFilters.search || '');
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'info' | 'error' });
+
+    useEffect(() => {
+        if (flash?.success) {
+            setSnackbar({ open: true, message: flash.success, severity: 'success' });
+        } else if (flash?.info) {
+            setSnackbar({ open: true, message: flash.info, severity: 'info' });
+        } else if (flash?.error) {
+            setSnackbar({ open: true, message: flash.error, severity: 'error' });
+        }
+    }, [flash]);
 
     const handleSearch = () => {
         router.get(
@@ -180,6 +195,7 @@ export default function UsersIndex({ users, filters: initialFilters }: Props) {
                                             <TableCell>ID</TableCell>
                                             <TableCell>Nombre</TableCell>
                                             <TableCell>Email</TableCell>
+                                            <TableCell>Estado</TableCell>
                                             <TableCell>Tipo</TableCell>
                                             <TableCell>Notificaciones</TableCell>
                                             <TableCell>Registrado</TableCell>
@@ -199,6 +215,23 @@ export default function UsersIndex({ users, filters: initialFilters }: Props) {
                                                     <Typography variant="body2" color="text.secondary">
                                                         {user.email}
                                                     </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {user.email_verified_at ? (
+                                                        <Chip
+                                                            icon={<CheckCircleIcon />}
+                                                            label="Activo"
+                                                            color="success"
+                                                            size="small"
+                                                        />
+                                                    ) : (
+                                                        <Chip
+                                                            icon={<CancelIcon />}
+                                                            label="Pendiente"
+                                                            color="warning"
+                                                            size="small"
+                                                        />
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Chip
@@ -278,6 +311,18 @@ export default function UsersIndex({ users, filters: initialFilters }: Props) {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Snackbar for flash messages */}
+                <Snackbar
+                    open={snackbar.open}
+                    autoHideDuration={6000}
+                    onClose={() => setSnackbar({ ...snackbar, open: false })}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                >
+                    <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
+                        {snackbar.message}
+                    </Alert>
+                </Snackbar>
             </Container>
         </AppLayout>
     );

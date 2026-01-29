@@ -13,6 +13,7 @@ class NotificationDelivery extends Model
         'article_id',
         'scheduled_at',
         'sent_at',
+        'cancelled_at',
         'status',
         'error_message',
         'payload',
@@ -23,6 +24,7 @@ class NotificationDelivery extends Model
         return [
             'scheduled_at' => 'datetime',
             'sent_at' => 'datetime',
+            'cancelled_at' => 'datetime',
             'payload' => 'array',
         ];
     }

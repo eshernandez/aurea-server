@@ -13,10 +13,28 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Handle OPTIONS requests globally for CORS preflight
+Route::options('api/v1/{any}', function () {
+    return response('', 200)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-CSRF-TOKEN, X-XSRF-TOKEN, ngrok-skip-browser-warning')
+        ->header('Access-Control-Allow-Credentials', 'false')
+        ->header('Access-Control-Max-Age', '86400');
+})->where('any', '.*');
+
 Route::prefix('v1')->group(function () {
     // Public routes
     Route::post('/register', [App\Http\Controllers\Api\V1\AuthController::class, 'register']);
     Route::post('/login', [App\Http\Controllers\Api\V1\AuthController::class, 'login']);
+    Route::get('/verify-email', [App\Http\Controllers\Api\V1\AuthController::class, 'verifyEmail']);
+    Route::post('/resend-verification', [App\Http\Controllers\Api\V1\AuthController::class, 'resendVerificationEmail']);
+    
+    // Temporary endpoint to manually verify email (for debugging)
+    Route::post('/force-verify-email', [App\Http\Controllers\Api\V1\AuthController::class, 'forceVerifyEmail']);
+
+    // Public profile image route (img tags don't send auth headers)
+    Route::get('/profile/image/{filename}', [App\Http\Controllers\Api\V1\ProfileController::class, 'serveImage']);
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {

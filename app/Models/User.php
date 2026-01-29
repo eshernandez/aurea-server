@@ -29,6 +29,7 @@ class User extends Authenticatable
         'password',
         'is_admin',
         'profile_image',
+        'email_verified_at',
     ];
 
     /**
@@ -78,6 +79,11 @@ class User extends Authenticatable
         return $this->hasMany(QuoteUserHistory::class);
     }
 
+    public function emailVerificationTokens(): HasMany
+    {
+        return $this->hasMany(EmailVerificationToken::class);
+    }
+
     /**
      * The accessors to append to the model's array form.
      *
@@ -91,7 +97,31 @@ class User extends Authenticatable
     protected function profileImage(): Attribute
     {
         return Attribute::make(
-            get: fn (?string $value) => $value ? url('storage/' . $value) : null,
+            get: function (?string $value) {
+                if (!$value) {
+                    return null;
+                }
+                
+                // Try to use the current request URL if available (for API requests with ngrok)
+                if (app()->runningInConsole() === false && request()) {
+                    $scheme = request()->getScheme();
+                    $host = request()->getHttpHost();
+                    // Ensure we use https for ngrok URLs
+                    if (str_contains($host, 'ngrok')) {
+                        $scheme = 'https';
+                    }
+                    $baseUrl = $scheme . '://' . $host;
+                    
+                    // Extract filename from path (e.g., "profiles/abc123.png" -> "abc123.png")
+                    $filename = basename($value);
+                    
+                    // Use API endpoint to serve the image (more reliable than static files)
+                    return $baseUrl . '/api/v1/profile/image/' . $filename;
+                }
+                
+                // Fallback to asset() which uses APP_URL from .env
+                return asset('storage/' . $value);
+            },
         );
     }
 

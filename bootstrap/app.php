@@ -23,6 +23,15 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
+
+        // CORS debe estar PRIMERO en el middleware API
+        $middleware->api(prepend: [
+            \App\Http\Middleware\HandleCors::class,
+        ]);
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
         ]);

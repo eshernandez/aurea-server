@@ -14,6 +14,9 @@ Route::get('/', function () {
 Route::get('/download-app', [App\Http\Controllers\ContactController::class, 'index'])->name('download-app');
 Route::post('/contact', [App\Http\Controllers\ContactController::class, 'store'])->name('contact.store');
 
+// Email verification (web route for browser access)
+Route::get('/verify-email', [App\Http\Controllers\EmailVerificationController::class, 'verify'])->name('email.verify');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         // Si el usuario es admin, redirigir al dashboard de admin

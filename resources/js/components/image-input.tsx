@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import AlertDialog from '@/components/alert-dialog';
 import {
     Box,
     TextField,
@@ -51,13 +52,21 @@ export default function ImageInput({ value, onChange, error, label = 'Imagen', h
         if (file) {
             // Validar que sea una imagen
             if (!file.type.startsWith('image/')) {
-                alert('Por favor, selecciona un archivo de imagen válido.');
+                setAlertDialog({
+                    open: true,
+                    message: 'Por favor, selecciona un archivo de imagen válido.',
+                    severity: 'error',
+                });
                 return;
             }
 
             // Validar tamaño (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
-                alert('La imagen no debe superar los 5MB.');
+                setAlertDialog({
+                    open: true,
+                    message: 'La imagen no debe superar los 5MB.',
+                    severity: 'error',
+                });
                 return;
             }
 
@@ -217,6 +226,13 @@ export default function ImageInput({ value, onChange, error, label = 'Imagen', h
                     </Button>
                 </Paper>
             )}
+
+            <AlertDialog
+                open={alertDialog.open}
+                onClose={() => setAlertDialog({ ...alertDialog, open: false })}
+                message={alertDialog.message}
+                severity={alertDialog.severity}
+            />
         </Box>
     );
 }
